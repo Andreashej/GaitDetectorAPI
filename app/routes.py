@@ -37,48 +37,56 @@ class DataPointList(Resource):
     def post(self, table = 'live', gait = None):
         args = self.reqparse.parse_args()
 
+        successful = []
+
         for data in args['datapoints']:
-            if table == 'test':
-                data = SensorDataTest(
-                    activity_id = data['activity_id'],
-                    gait = data['gait'],
-                    timestamp = data['timestamp'],
-                    acc_x = data['raw_data']['acc']['x'],
-                    acc_y = data['raw_data']['acc']['y'],
-                    acc_z = data['raw_data']['acc']['z'],
-                    gyr_x = data['raw_data']['gyr']['x'],
-                    gyr_y = data['raw_data']['gyr']['y'],
-                    gyr_z = data['raw_data']['gyr']['z'],
-                    mag_x = data['raw_data']['mag']['x'],
-                    mag_y = data['raw_data']['mag']['y'],
-                    mag_z = data['raw_data']['mag']['z']
-                )
-            else:
-                data = SensorData(
-                    activity_id = data['activity_id'],
-                    gait = data['gait'],
-                    timestamp = data['timestamp'],
-                    acc_x = data['raw_data']['acc']['x'],
-                    acc_y = data['raw_data']['acc']['y'],
-                    acc_z = data['raw_data']['acc']['z'],
-                    gyr_x = data['raw_data']['gyr']['x'],
-                    gyr_y = data['raw_data']['gyr']['y'],
-                    gyr_z = data['raw_data']['gyr']['z'],
-                    mag_x = data['raw_data']['mag']['x'],
-                    mag_y = data['raw_data']['mag']['y'],
-                    mag_z = data['raw_data']['mag']['z']
-                )
-            try:
-                db.session.add(data)
-            except Exception as e:
-                return { 'STATUS': 'ERROR', 'message': 'Database error' }, 500
+            if data:
+                if table == 'test':
+                    db_data = SensorDataTest(
+                        activity_id = data['activity_id'],
+                        gait = data['gait'],
+                        timestamp = data['timestamp'],
+                        acc_x = data['acc_x'],
+                        acc_y = data['acc_y'],
+                        acc_z = data['acc_z'],
+                        gyr_x = data['gyr_x'],
+                        gyr_y = data['gyr_y'],
+                        gyr_z = data['gyr_z'],
+                        mag_x = data['mag_x'],
+                        mag_y = data['mag_y'],
+                        mag_z = data['mag_z'],
+                        setting = data['setting'],
+                        phone_placement = data['position']
+                    )
+                else:
+                    db_data = SensorData(
+                        activity_id = data['activity_id'],
+                        gait = data['gait'],
+                        timestamp = data['timestamp'],
+                        acc_x = data['acc_x'],
+                        acc_y = data['acc_y'],
+                        acc_z = data['acc_z'],
+                        gyr_x = data['gyr_x'],
+                        gyr_y = data['gyr_y'],
+                        gyr_z = data['gyr_z'],
+                        mag_x = data['mag_x'],
+                        mag_y = data['mag_y'],
+                        mag_z = data['mag_z'],
+                        setting = data['setting'],
+                        phone_placement = data['position']
+                    )
+                try:
+                    db.session.add(db_data)
+                    successful.append(data['id'])
+                except Exception as e:
+                    return { 'STATUS': 'ERROR', 'message': 'Database error' }, 500
         
         try:
             db.session.commit()
         except Exception as e:
             return { 'STATUS': 'ERROR', 'message': 'Database error' }
 
-        return {'STATUS': 'OK', 'message': 'Saved {} datapoints'.format(len(args['datapoints']))}
+        return {'STATUS': 'OK', 'message': 'Saved {} datapoints'.format(len(successful)), 'payload': successful}
 
 
 api.add_resource(DataPointList, '/data', endpoint="datapoints")
